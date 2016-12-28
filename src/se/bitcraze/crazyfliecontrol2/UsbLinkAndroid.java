@@ -33,7 +33,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map.Entry;
 
-import se.bitcraze.crazyflielib.usb.CrazyUsbInterface;
 import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
@@ -44,6 +43,7 @@ import android.hardware.usb.UsbEndpoint;
 import android.hardware.usb.UsbInterface;
 import android.hardware.usb.UsbManager;
 import android.util.Log;
+import se.bitcraze.crazyflie.lib.usb.CrazyUsbInterface;
 
 public class UsbLinkAndroid implements CrazyUsbInterface{
 
@@ -141,7 +141,7 @@ public class UsbLinkAndroid implements CrazyUsbInterface{
      * @see se.bitcraze.crazyflie.lib.IUsbLink#releaseInterface()
      */
     public void releaseInterface() {
-        Log.d(LOG_TAG, "UsbLinkAndroid releaseInterface()");
+        Log.d(LOG_TAG, "releaseInterface()");
         if (mConnection != null && mIntf != null){
             mConnection.releaseInterface(mIntf);
             mConnection = null;

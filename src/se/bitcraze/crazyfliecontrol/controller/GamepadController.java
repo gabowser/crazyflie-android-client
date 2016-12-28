@@ -27,6 +27,7 @@
 
 package se.bitcraze.crazyfliecontrol.controller;
 
+import se.bitcraze.crazyflie.lib.crazyradio.RadioDriver;
 import se.bitcraze.crazyfliecontrol.prefs.PreferencesActivity;
 import se.bitcraze.crazyfliecontrol2.MainActivity;
 import se.bitcraze.crazyfliecontrol2.R;
@@ -58,6 +59,9 @@ public class GamepadController extends AbstractController {
     private int mRollTrimMinusBtn;
     private int mPitchTrimPlusBtn;
     private int mPitchTrimMinusBtn;
+    private int mAlt1Btn;
+    private int mAlt2Btn;
+    private int mHoverBtn;
 
     private int mRightAnalogYAxisInvertFactor = -1;
     private int mLeftAnalogYAxisInvertFactor = -1;
@@ -79,6 +83,11 @@ public class GamepadController extends AbstractController {
     private String mRollTrimMinusBtnDefaultValue;
     private String mPitchTrimPlusBtnDefaultValue;
     private String mPitchTrimMinusBtnDefaultValue;
+    private String mAlt1BtnDefaultValue;
+    private String mAlt2BtnDefaultValue;
+    private String mHoverBtnDefaultValue;
+
+    private boolean mHover = false;
 
     public GamepadController(Controls controls, MainActivity activity, SharedPreferences preferences) {
         super(controls, activity);
@@ -109,21 +118,38 @@ public class GamepadController extends AbstractController {
     public void dealWithKeyEvent(KeyEvent event){
         switch (event.getAction()) {
         case KeyEvent.ACTION_DOWN:
-            if(event.getKeyCode() == mEmergencyBtn){
+            if (event.getKeyCode() == mEmergencyBtn){
                 //quick solution
                 mControls.resetAxisValues();
                 if (mActivity.getCrazyflie() != null) {
                     mActivity.disconnect();
                 }
                 Toast.makeText(mActivity, "Emergency Stop", Toast.LENGTH_SHORT).show();
-            }else if (event.getKeyCode() == mRollTrimPlusBtn) {
+            } else if (event.getKeyCode() == mRollTrimPlusBtn) {
                 mControls.increaseTrim(PreferencesActivity.KEY_PREF_ROLLTRIM);
-            }else if (event.getKeyCode() == mRollTrimMinusBtn) {
-            	mControls.decreaseTrim(PreferencesActivity.KEY_PREF_ROLLTRIM);
-            }else if (event.getKeyCode() == mPitchTrimPlusBtn) {
-            	mControls.increaseTrim(PreferencesActivity.KEY_PREF_PITCHTRIM);
-            }else if (event.getKeyCode() == mPitchTrimMinusBtn) {
-            	mControls.decreaseTrim(PreferencesActivity.KEY_PREF_PITCHTRIM);
+            } else if (event.getKeyCode() == mRollTrimMinusBtn) {
+                mControls.decreaseTrim(PreferencesActivity.KEY_PREF_ROLLTRIM);
+            } else if (event.getKeyCode() == mPitchTrimPlusBtn) {
+                mControls.increaseTrim(PreferencesActivity.KEY_PREF_PITCHTRIM);
+            } else if (event.getKeyCode() == mPitchTrimMinusBtn) {
+                mControls.decreaseTrim(PreferencesActivity.KEY_PREF_PITCHTRIM);
+            } else if (event.getKeyCode() == mAlt1Btn) {
+                mActivity.runAltAction(mControls.getAlt1Action());
+            } else if (event.getKeyCode() == mAlt2Btn) {
+                mActivity.runAltAction(mControls.getAlt2Action());
+            } else if (event.getKeyCode() == mHoverBtn) {
+                if (mActivity.getCrazyflie().getDriver() instanceof RadioDriver) {
+                    mHover = true;
+                    mActivity.enableAltHoldMode(mHover);
+                }
+            }
+            break;
+        case KeyEvent.ACTION_UP:
+            if(event.getKeyCode() == mHoverBtn) {
+                if (mActivity.getCrazyflie().getDriver() instanceof RadioDriver) {
+                    mHover = false;
+                    mActivity.enableAltHoldMode(mHover);
+                }
             }
             break;
         default:
@@ -145,6 +171,9 @@ public class GamepadController extends AbstractController {
         mRollTrimMinusBtnDefaultValue = res.getString(R.string.preferences_rolltrim_minus_btn_defaultValue);
         mPitchTrimPlusBtnDefaultValue = res.getString(R.string.preferences_pitchtrim_plus_btn_defaultValue);
         mPitchTrimMinusBtnDefaultValue = res.getString(R.string.preferences_pitchtrim_minus_btn_defaultValue);
+        mAlt1BtnDefaultValue = res.getString(R.string.preferences_alt1_btn_defaultValue);
+        mAlt2BtnDefaultValue = res.getString(R.string.preferences_alt2_btn_defaultValue);
+        mHoverBtnDefaultValue = res.getString(R.string.preferences_hover_btn_defaultValue);
     }
 
     public void setControlConfig() {
@@ -160,6 +189,9 @@ public class GamepadController extends AbstractController {
         this.mRollTrimMinusBtn = KeyEvent.keyCodeFromString(mPreferences.getString(PreferencesActivity.KEY_PREF_ROLLTRIM_MINUS_BTN, mRollTrimMinusBtnDefaultValue));
         this.mPitchTrimPlusBtn = KeyEvent.keyCodeFromString(mPreferences.getString(PreferencesActivity.KEY_PREF_PITCHTRIM_PLUS_BTN, mPitchTrimPlusBtnDefaultValue));
         this.mPitchTrimMinusBtn = KeyEvent.keyCodeFromString(mPreferences.getString(PreferencesActivity.KEY_PREF_PITCHTRIM_MINUS_BTN, mPitchTrimMinusBtnDefaultValue));
+        this.mAlt1Btn = KeyEvent.keyCodeFromString(mPreferences.getString(PreferencesActivity.KEY_PREF_ALT1_BTN, mAlt1BtnDefaultValue));
+        this.mAlt2Btn = KeyEvent.keyCodeFromString(mPreferences.getString(PreferencesActivity.KEY_PREF_ALT2_BTN, mAlt2BtnDefaultValue));
+        this.mHoverBtn = KeyEvent.keyCodeFromString(mPreferences.getString(PreferencesActivity.KEY_PREF_HOVER_BTN, mHoverBtnDefaultValue));
     }
 
     private boolean useSplitAxisYaw(){
@@ -180,6 +212,46 @@ public class GamepadController extends AbstractController {
             yaw = (mControls.getMode() == 1 || mControls.getMode() == 2) ? mControls.getLeftAnalog_X() : mControls.getRightAnalog_X();
         }
         return yaw * mControls.getYawFactor() * mControls.getDeadzone(yaw);
+    }
+
+    public boolean isHover() {
+        return this.mHover;
+    }
+
+    /*
+     * Thrust value in percent (used in the UI)
+     */
+    public float getThrust() {
+        float thrust = ((mControls.getMode() == 1 || mControls.getMode() == 3) ? mControls.getRightAnalog_Y() : mControls.getLeftAnalog_Y());
+        //Hacky Hover Mode
+        if (isHover() && mControls.getDeadzone(thrust) == 1) {
+            float minThrust = mControls.getMinThrust();
+            if (thrust < 0) {
+                minThrust = minThrust * -1;
+            }
+            return minThrust + (thrust * mControls.getThrustFactor());
+        } else if (thrust > mControls.getDeadzone()) {
+            return mControls.getMinThrust() + (thrust * mControls.getThrustFactor());
+        }
+        return 0;
+    }
+
+    /*
+     * Absolute thrust value (gets send to the Crazyflie)
+     */
+    public float getThrustAbsolute() {
+        float thrust = getThrust();
+        float absThrust = thrust/100 * MAX_THRUST;
+
+        //Hacky Hover Mode
+        if(isHover()) {
+            return 32767 + ((absThrust/65535)*32767);
+        } else {
+            if(thrust > 0) {
+                return absThrust;
+            }
+        }
+        return 0;
     }
 
 }

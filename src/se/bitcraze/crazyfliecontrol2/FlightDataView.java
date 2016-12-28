@@ -29,7 +29,6 @@ package se.bitcraze.crazyfliecontrol2;
 
 import java.math.BigDecimal;
 
-import se.bitcraze.crazyfliecontrol2.R;
 import android.content.Context;
 import android.util.AttributeSet;
 import android.view.LayoutInflater;
@@ -46,27 +45,24 @@ public class FlightDataView extends LinearLayout {
     private TextView mTextView_roll;
     private TextView mTextView_thrust;
     private TextView mTextView_yaw;
-    private TextView mTextView_linkQuality;
 
     public FlightDataView(Context context, AttributeSet attrs) {
-      super(context, attrs);
+        super(context, attrs);
 
-      setOrientation(LinearLayout.HORIZONTAL);
+        setOrientation(LinearLayout.HORIZONTAL);
 
-      LayoutInflater inflater = (LayoutInflater) context.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
-      inflater.inflate(R.layout.view_flight_data, this, true);
-      
-      mTextView_pitch = (TextView) findViewById(R.id.pitch);
-      mTextView_roll = (TextView) findViewById(R.id.roll);
-      mTextView_thrust = (TextView) findViewById(R.id.thrust);
-      mTextView_yaw = (TextView) findViewById(R.id.yaw);
-      mTextView_linkQuality = (TextView) findViewById(R.id.linkQuality);
-      //initialize
-      mTextView_pitch.setText(format(R.string.pitch, 0.0));
-      mTextView_roll.setText(format(R.string.roll, 0.0));
-      mTextView_thrust.setText(format(R.string.thrust, 0.0));
-      mTextView_yaw.setText(format(R.string.yaw, 0.0));
-      setLinkQualityText("n/a");
+        LayoutInflater inflater = (LayoutInflater) context.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
+        inflater.inflate(R.layout.view_flight_data, this, true);
+
+        mTextView_pitch = (TextView) findViewById(R.id.pitch);
+        mTextView_roll = (TextView) findViewById(R.id.roll);
+        mTextView_thrust = (TextView) findViewById(R.id.thrust);
+        mTextView_yaw = (TextView) findViewById(R.id.yaw);
+        //initialize
+        mTextView_pitch.setText(format(R.string.pitch, 0.0));
+        mTextView_roll.setText(format(R.string.roll, 0.0));
+        mTextView_thrust.setText(format(R.string.thrust, 0.0));
+        mTextView_yaw.setText(format(R.string.yaw, 0.0));
     }
 
     public FlightDataView(Context context) {
@@ -88,10 +84,6 @@ public class FlightDataView extends LinearLayout {
         BigDecimal bd = new BigDecimal(unrounded);
         BigDecimal rounded = bd.setScale(2, BigDecimal.ROUND_HALF_UP);
         return rounded.doubleValue();
-    }
-    
-    public void setLinkQualityText(String quality){
-        mTextView_linkQuality.setText(format(R.string.linkQuality, quality));
     }
 
 }
